@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '../component/common/Header';
 import Footer from '../component/common/Footer';
-// import NavigationArrows from '../component/common/NavigationArrows';
+
 
 const MainLayout = ({ children }) => {
   return (
@@ -9,7 +9,6 @@ const MainLayout = ({ children }) => {
       <Header />
       <main className="flex-grow">
         {children}
-        {/* <NavigationArrows /> */}
       </main>
       <Footer />
     </div>

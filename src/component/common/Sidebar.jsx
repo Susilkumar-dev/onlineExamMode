@@ -1,151 +1,175 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../../store/slices/authSlice';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  HelpCircle, 
+  LogOut, 
+  Sun, 
+  Moon,
+  LayoutDashboard 
+} from 'lucide-react';
 
 const Sidebar = ({ navItems }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
+  const dispatch = useDispatch();
 
-  // Handler for the "New Exam" button
-  const handleNewExamClick = () => {
-    // Navigate to exam creation page
-    navigate('/teacher/create-exam');
-    // Alternatively, you could:
-    // 1. Open a modal: setShowNewExamModal(true)
-    // 2. Open a form: setShowNewExamForm(true)
-  };
+  const handleNewExamClick = () => window.location.href = '/teacher/create-exam';
+  const handleNeedHelpClick = () => window.location.href = '/help';
 
-  // Handler for the "Need Help?" button
-  const handleNeedHelpClick = () => {
-    // Navigate to help page
-    navigate('/help');
-    // Alternatively, you could:
-    // 1. Open external link: window.open('https://help.example.com', '_blank')
-    // 2. Open contact modal: setShowContactModal(true)
+  const handleLogout = async () => {
+    try {
+      // Clear Redux state
+      await dispatch(logoutUser()).unwrap();
+      
+      // Clear all browser storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear cookies
+      document.cookie.split(";").forEach(c => {
+        document.cookie = c.replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // Force hard redirect to login page
+      window.location.href = '/login';
+      
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still redirect even if there's an error
+      window.location.href = '/login';
+    }
   };
 
   return (
-    <aside className={`${
-      isExpanded ? 'w-64' : 'w-20'
-    } transition-all duration-300 ${
+    <aside className={`h-screen sticky top-0 transition-all duration-500 ease-in-out flex flex-col shadow-2xl ${
+      isExpanded ? 'w-72' : 'w-20'
+    } ${
       isDark 
-        ? 'bg-gray-900 border-r border-gray-800 text-gray-100' 
-        : 'bg-white border-r border-gray-200 text-gray-700'
+        ? 'bg-[#0f172a] border-r border-slate-800 text-slate-200' 
+        : 'bg-white border-r border-slate-200 text-slate-600'
     }`}>
-      <div className="p-4">
-        {/* Collapse/Expand button */}
+      
+      {/* Header & Toggle */}
+      <div className="p-6 flex items-center justify-between">
+        {isExpanded && (
+          <div className="flex items-center gap-3 animate-in fade-in duration-500">
+            <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-lg flex items-center justify-center">
+              <LayoutDashboard size={20} className="text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-violet-500">
+              EduPortal
+            </span>
+          </div>
+        )}
         <button 
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`w-full flex justify-end mb-4 p-2 rounded-lg transition-colors ${
-            isDark 
-              ? 'hover:bg-gray-800 text-gray-400 hover:text-white' 
-              : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
+          className={`p-1.5 rounded-xl transition-all duration-200 ${
+            isDark ? 'hover:bg-slate-800 bg-slate-900 text-slate-400' : 'hover:bg-slate-100 bg-slate-50 text-slate-500'
           }`}
         >
-          {isExpanded ? '«' : '»'}
+          {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 px-4 overflow-y-auto no-scrollbar">
         
-        {/* Navigation Items */}
-        <nav className="space-y-2">
+        {/* Navigation Menu */}
+        <nav className="space-y-1.5 mb-8">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => {
-                const baseClasses = `flex items-center px-4 py-3 rounded-lg transition-all duration-300 ${
-                  isExpanded ? 'justify-start' : 'justify-center'
-                }`;
-                
-                if (isActive) {
-                  return `${baseClasses} ${
-                    isDark 
-                      ? 'bg-gradient-to-r from-primary-700 to-secondary-700 text-white shadow-lg' 
-                      : 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
-                  }`;
+              className={({ isActive }) => `
+                flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 group
+                ${isActive 
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' 
+                  : isDark ? 'hover:bg-slate-800/50 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
                 }
-                
-                return `${baseClasses} ${
-                  isDark 
-                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white hover:shadow-md' 
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md'
-                }`;
-              }}
+                ${!isExpanded && 'justify-center'}
+              `}
             >
-              <span className={`${isExpanded ? 'text-xl mr-3' : 'text-2xl'}`}>
+              <span className={`transition-transform duration-300 group-hover:scale-110`}>
                 {item.icon}
               </span>
               {isExpanded && (
-                <span className="font-medium">{item.label}</span>
+                <span className="font-semibold tracking-wide text-sm">{item.label}</span>
               )}
             </NavLink>
           ))}
         </nav>
 
-        {/* Quick Actions */}
+        {/* Logout Button */}
+        <div className="mb-8">
+          <button
+            onClick={handleLogout}
+            className={`w-full group flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300
+              ${isDark 
+                ? 'bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white' 
+                : 'bg-red-50 hover:bg-red-600 text-red-600 hover:text-white'
+              }
+              ${!isExpanded && 'justify-center'}
+            `}
+          >
+            <LogOut size={22} className="group-hover:rotate-12 transition-transform" />
+            {isExpanded && <span className="font-bold text-sm tracking-wide uppercase">Log Out</span>}
+          </button>
+        </div>
+
+        {/* Quick Actions Card */}
         {isExpanded && (
-          <div className={`mt-8 pt-8 ${
-            isDark ? 'border-gray-800' : 'border-gray-200'
-          } border-t`}>
-            <h3 className={`text-sm font-semibold mb-3 ${
-              isDark ? 'text-gray-400' : 'text-gray-500'
-            }`}>QUICK ACTIONS</h3>
+          <div className={`p-4 rounded-2xl border mb-6 ${
+            isDark ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-50 border-slate-100'
+          }`}>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 ml-1">
+              Quick Actions
+            </p>
             <button 
               onClick={handleNewExamClick}
-              className={`w-full font-medium py-2 px-4 rounded-lg mb-2 transition-all duration-300 ${
-                isDark 
-                  ? 'bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white shadow-md hover:shadow-lg' 
-                  : 'bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white shadow-md hover:shadow-lg'
-              }`}
+              className="w-full flex items-center gap-3 p-2.5 mb-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shadow-md shadow-indigo-500/20"
             >
-              + New Exam
+              <Plus size={18} />
+              <span className="text-sm font-medium">New Exam</span>
             </button>
             <button 
               onClick={handleNeedHelpClick}
-              className={`w-full font-medium py-2 px-4 rounded-lg transition-colors ${
-                isDark 
-                  ? 'bg-gray-800 hover:bg-gray-700 text-gray-100 shadow-sm hover:shadow' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-800 shadow-sm hover:shadow'
+              className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 shadow-sm'
               }`}
             >
-              Need Help?
+              <HelpCircle size={18} />
+              <span className="text-sm font-medium">Need Help?</span>
             </button>
           </div>
         )}
+      </div>
 
-        {/* Theme Toggle in Sidebar */}
-        {isExpanded && (
-          <div className={`mt-8 pt-8 ${
-            isDark ? 'border-gray-800' : 'border-gray-200'
-          } border-t`}>
-            <div className="flex items-center justify-between">
-              <span className={`text-sm font-medium ${
-                isDark ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                {isDark ? 'Dark Mode' : 'Light Mode'}
-              </span>
-              <button
-                onClick={toggleTheme}
-                className={`relative w-12 h-6 rounded-full p-1 cursor-pointer transition-all ${
-                  isDark 
-                    ? 'bg-gradient-to-r from-primary-600 to-secondary-600' 
-                    : 'bg-gradient-to-r from-primary-400 to-secondary-400'
-                }`}
-                aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-              >
-                <div className={`bg-white w-4 h-4 rounded-full transform transition-transform ${
-                  isDark ? 'translate-x-6' : 'translate-x-0'
-                }`}>
-                  {isDark ? (
-                    <span className="text-xs flex items-center justify-center h-full">🌙</span>
-                  ) : (
-                    <span className="text-xs flex items-center justify-center h-full">☀️</span>
-                  )}
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Footer - Theme Toggle */}
+      <div className={`p-4 ${isDark ? 'border-t border-slate-800' : 'border-t border-slate-100'}`}>
+        <div className={`flex items-center ${isExpanded ? 'justify-between' : 'justify-center'} p-2 rounded-2xl ${
+          isDark ? 'bg-slate-900/80' : 'bg-slate-100'
+        }`}>
+          {isExpanded && (
+            <span className="text-xs font-bold uppercase tracking-widest ml-2 text-slate-500">
+              {isDark ? 'Dark' : 'Light'}
+            </span>
+          )}
+          <button
+            onClick={toggleTheme}
+            className={`relative p-2 rounded-xl transition-all duration-500 ${
+              isDark ? 'bg-indigo-500 text-white' : 'bg-white text-amber-500 shadow-sm'
+            }`}
+          >
+            {isDark ? <Moon size={18} fill="currentColor" /> : <Sun size={18} fill="currentColor" />}
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -45,29 +45,41 @@ import NotFound from './pages/errors/NotFound';
 import Unauthorized from './pages/errors/Unauthorized';
 import Features from './component/landing/Features';
 import Testimonials from './component/landing/Testimonials';
-import Stats from './component/landing/Stats';
 
 // Create a wrapper component that uses Redux hooks
 const AppContent = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   const PublicRoute = ({ children }) => {
+    // If user is authenticated, redirect them away from auth pages
     if (isAuthenticated) {
-      return <Navigate to="/student/dashboard" />;
+      const currentPath = window.location.pathname;
+      const isAuthPage = ['/login', '/register', '/forgot-password'].includes(currentPath);
+      
+      if (isAuthPage) {
+        // Redirect to appropriate dashboard based on role
+        if (user?.role === 'admin') {
+          return <Navigate to="/admin/dashboard" replace />;
+        } else if (user?.role === 'teacher') {
+          return <Navigate to="/teacher/dashboard" replace />;
+        } else {
+          return <Navigate to="/student/dashboard" replace />;
+        }
+      }
     }
     return children;
   };
 
   const PrivateRoute = ({ children }) => {
     if (!isAuthenticated) {
-      return <Navigate to="/login" />;
+      return <Navigate to="/login" replace />;
     }
     return children;
   };
 
   const RoleBasedRoute = ({ children, allowedRoles }) => {
     if (!user?.role || !allowedRoles.includes(user.role)) {
-      return <Navigate to="/unauthorized" />;
+      return <Navigate to="/unauthorized" replace />;
     }
     return children;
   };
@@ -118,9 +130,9 @@ const AppContent = () => {
             }
           />
 
-           <Route path="/features" element={<MainLayout><Features/></MainLayout>} />
-           <Route path="/Courses" element={<MainLayout><Courses/></MainLayout>} />
-           <Route path="/testimonials" element={<MainLayout><Testimonials /></MainLayout>} />
+          <Route path="/features" element={<MainLayout><Features/></MainLayout>} />
+          <Route path="/courses" element={<MainLayout><Courses/></MainLayout>} />
+          <Route path="/testimonials" element={<MainLayout><Testimonials /></MainLayout>} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={
@@ -193,14 +205,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
